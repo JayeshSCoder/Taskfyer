@@ -14,7 +14,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   //validation
   if (!name || !email || !password) {
     // 400 Bad Request
-    res.status(400).json({ message: "All fields are required" });
+    return res.status(400).json({ message: "All fields are required" });
   }
 
   // check password length
@@ -108,7 +108,7 @@ export const loginUser = asyncHandler(async (req, res) => {
       httpOnly: true,
       maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
       sameSite: "none", // cross-site access --> allow all third-party cookies
-      secure: true,
+      secure: false,
     });
 
     // send back the user and token in the response to the client
@@ -132,7 +132,7 @@ export const logoutUser = asyncHandler(async (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
     sameSite: "none",
-    secure: true,
+    secure: false,
     path: "/",
   });
 
@@ -188,7 +188,7 @@ export const userLoginStatus = asyncHandler(async (req, res) => {
 
   if (!token) {
     // 401 Unauthorized
-    res.status(401).json({ message: "Not authorized, please login!" });
+    return res.status(401).json({ message: "Not authorized, please login!" });
   }
   // verify the token
   const decoded = jwt.verify(token, process.env.JWT_SECRET);
