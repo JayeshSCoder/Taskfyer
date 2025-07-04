@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { container, item } from "@/utils/animations";
 
 export default function Home() {
-  useRedirect("/login");
+  const { loading, isAuthenticated } = useRedirect("/login");
 
   const { openModalForAdd, priority, completedTasks, setPriority } = useTasks();
 
@@ -20,6 +20,20 @@ export default function Home() {
   useEffect(() => {
     setPriority("all");
   }, []);
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  // Don't render content if not authenticated (redirect is in progress)
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <main className="m-6 h-full">

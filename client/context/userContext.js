@@ -98,13 +98,9 @@ export const UserContextProvider = ({ children }) => {
 
       // coerce the string to boolean
       loggedIn = !!res.data;
-      setLoading(false);
-
-      if (!loggedIn) {
-        router.push("/login");
-      }
     } catch (error) {
       console.log("Error getting user login status", error);
+      loggedIn = false;
     }
 
     return loggedIn;
@@ -112,6 +108,7 @@ export const UserContextProvider = ({ children }) => {
 
   // logout user
   const logoutUser = async () => {
+    setLoading(true);
     try {
       const res = await axios.get(`${serverUrl}/api/v1/logout`, {
         withCredentials: true, // send cookies to the server
@@ -119,13 +116,26 @@ export const UserContextProvider = ({ children }) => {
 
       toast.success("User logged out successfully");
 
+      // Clear user state completely
       setUser({});
+      
+      // Clear any local storage if used
+      if (typeof window !== 'undefined') {
+        localStorage.clear();
+        sessionStorage.clear();
+      }
 
-      // redirect to login page
-      router.push("/login");
+      setLoading(false);
+      
+      // Use replace to prevent back button issues
+      router.replace("/login");
     } catch (error) {
       console.log("Error logging out user", error);
-      toast.error(error.response.data.message);
+      // Even if logout request fails, clear local state and redirect
+      setUser({});
+      setLoading(false);
+      router.replace("/login");
+      toast.error("Logout completed, but there was an issue with the server");
     }
   };
 
@@ -356,10 +366,21 @@ export const UserContextProvider = ({ children }) => {
 
   useEffect(() => {
     const loginStatusGetUser = async () => {
-      const isLoggedIn = await userLoginStatus();
+      setLoading(true);
+      try {
+        const isLoggedIn = await userLoginStatus();
 
-      if (isLoggedIn) {
-        await getUser();
+        if (isLoggedIn) {
+          await getUser();
+        } else {
+          // Ensure user state is empty if not logged in
+          setUser({});
+          setLoading(false);
+        }
+      } catch (error) {
+        // If there's an error checking login status, clear user state
+        setUser({});
+        setLoading(false);
       }
     };
 
@@ -390,6 +411,7 @@ export const UserContextProvider = ({ children }) => {
         changePassword,
         allUsers,
         deleteUser,
+        loading,
       }}
     >
       {children}
